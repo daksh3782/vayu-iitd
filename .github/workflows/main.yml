@@ -1,0 +1,44 @@
+name: Netlify Rebuild and Data Fetch
+
+on:
+  schedule:
+    # Change this to '*/10 * * * *' for every 10 minutes
+    - cron: '*/5 * * * *'  # Runs every 15 minutes
+  workflow_dispatch: # Adds a button to run it manually
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Checks out your repository code
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2. Sets up Node.js so we can run npm
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16' # You can use 16, 18, etc.
+
+      # 3. Installs your dependencies (like firebase-admin)
+      - name: Install dependencies
+        run: npm install
+
+      # 4. Runs your build script to get new data
+      - name: Run build script (build-data.js)
+        run: npm run build
+
+      # 5. Commits the new JSON files back to your repo
+      - name: Commit new data files
+        run: |
+          git config --global user.name 'GitHub Actions Bot'
+          git config --global user.email 'actions-bot@github.com'
+          git add -A # Stages all changes (e.g., your new JSON files)
+          # Only commit if there are actual changes to the data
+          if ! git diff --staged --quiet; then
+            git commit -m "📈 [BOT] Auto-refresh VAYU data"
+            git push
+          else
+            echo "No data changes. No commit needed."
+          fi
+          
