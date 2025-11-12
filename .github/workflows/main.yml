@@ -1,44 +1,50 @@
+# This name will show up in your GitHub "Actions" tab
 name: Netlify Rebuild and Data Fetch
 
 on:
+  # Triggers the workflow every 5 minutes
   schedule:
-    # Change this to '*/10 * * * *' for every 10 minutes
-    - cron: '*/5 * * * *'  # Runs every 15 minutes
-  workflow_dispatch: # Adds a button to run it manually
+    - cron: '*/5 * * * *'
+  
+  # Adds a "Run workflow" button in the Actions tab for manual testing
+  workflow_dispatch:
 
 jobs:
   rebuild:
+    # Use a standard Ubuntu runner
     runs-on: ubuntu-latest
+    
     steps:
-      # 1. Checks out your repository code
+      # 1. Checks out your repository code so the script can run
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      # 2. Sets up Node.js so we can run npm
+      # 2. Sets up Node.js
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '16' # You can use 16, 18, etc.
+          node-version: '18'
 
-      # 3. Installs your dependencies (like firebase-admin)
+      # 3. Installs dependencies
       - name: Install dependencies
         run: npm install
 
-      # 4. Runs your build script to get new data
+      # 4. Runs your build script. It will use the hardcoded key.
       - name: Run build script (build-data.js)
-        run: npm run build
+        run: npm run build # This runs 'node build-data.js'
 
-      # 5. Commits the new JSON files back to your repo
+      # 5. Configures Git and commits the new data files
       - name: Commit new data files
         run: |
           git config --global user.name 'GitHub Actions Bot'
           git config --global user.email 'actions-bot@github.com'
-          git add -A # Stages all changes (e.g., your new JSON files)
-          # Only commit if there are actual changes to the data
+          
+          git add -A # Stages all new/changed files
+          
+          # Only commit if there are actual changes
           if ! git diff --staged --quiet; then
             git commit -m "📈 [BOT] Auto-refresh VAYU data"
             git push
           else
             echo "No data changes. No commit needed."
           fi
-          
