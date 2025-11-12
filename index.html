@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VAYU - Air Quality Monitor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .sensor-card {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .sensor-card:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+</head>
+<body class="bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-200">
+
+    <!-- Header -->
+    <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="#" id="home-link" class="text-2xl font-bold text-indigo-600">VAYU</a>
+            <div class="flex items-center space-x-4">
+                <button id="theme-toggle" class="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none">
+                    <svg id="theme-toggle-dark-icon" class="hidden w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+                    <svg id="theme-toggle-light-icon" class="hidden w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm-.707 10.607a1 1 0 010-1.414l.707-.707a1 1 0 111.414 1.414l-.707.707a1 1 0 01-1.414 0zM1 11a1 1 0 100-2H0a1 1 0 100 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+                </button>
+                <button id="menu-toggle-button" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 focus:outline-none z-50">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Menu Overlay -->
+    <div id="menu-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30 transition-opacity duration-300 ease-in-out"></div>
+
+    <!-- Side Menu -->
+    <div id="side-menu" class="fixed top-0 right-0 h-full w-80 bg-white dark:bg-gray-800 shadow-lg z-40 transform translate-x-full transition-transform duration-300 ease-in-out">
+        <div class="p-6">
+            <button id="close-menu-button" class="absolute top-4 right-4 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-8 pt-4">Menu</h2>
+            <a href="#home" class="nav-link block text-lg text-gray-700 dark:text-gray-300 font-semibold my-4 hover:text-indigo-600 dark:hover:text-indigo-400 transition" data-page="home">Home</a>
+            <a href="#about" class="nav-link block text-lg text-gray-700 dark:text-gray-300 font-semibold my-4 hover:text-indigo-600 dark:hover:text-indigo-400 transition" data-page="about">About</a>
+            <a href="#monitor" class="nav-link block text-lg text-gray-700 dark:text-gray-300 font-semibold my-4 hover:text-indigo-600 dark:hover:text-indigo-400 transition" data-page="monitor">Our Monitor</a>
+            <a href="#gallery" class="nav-link block text-lg text-gray-700 dark:text-gray-300 font-semibold my-4 hover:text-indigo-600 dark:hover:text-indigo-400 transition" data-page="gallery">Gallery</a>
+            <a href="#timeline" class="nav-link block text-lg text-gray-700 dark:text-gray-300 font-semibold my-4 hover:text-indigo-600 dark:hover:text-indigo-400 transition" data-page="timeline">Timeline</a>
+        </div>
+    </div>
+
+    <!-- Card Detail Modal - Improved Mobile-Friendly Design -->
+    <div id="card-detail-modal" class="hidden fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div class="sticky top-0 bg-gradient-to-r from-indigo-600 to-purple-600 p-4 md:p-6 rounded-t-3xl z-10 flex justify-between items-center">
+                <h2 id="modal-title" class="text-2xl md:text-3xl font-bold text-white"></h2>
+                <button id="close-modal" class="text-white hover:text-gray-200 transition-colors flex-shrink-0">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div id="modal-content" class="p-4 md:p-8 space-y-6"></div>
+        </div>
+    </div>
+
+    <!-- Share Image Modal -->
+    <div id="share-modal" class="hidden fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-2xl font-bold dark:text-white">Share Air Quality</h3>
+                <button id="close-share-modal" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div id="share-image-container" class="mb-4 flex justify-center">
+                <img id="share-image" class="max-w-full rounded-lg shadow-lg" alt="Air Quality Share Image">
+            </div>
+            <button id="download-share-image" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition">
+                📥 Download Image
+            </button>
+        </div>
+    </div>
+
+    <!-- Hidden canvas for image generation -->
+    <div id="share-canvas-container" style="position: absolute; left: -9999px; top: -9999px;">
+        <div id="share-canvas" style="width: 1080px; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 60px; border-radius: 40px;">
+            <div style="background: #1e293b; border-radius: 30px; padding: 50px; box-shadow: 0 25px 50px rgba(0,0,0,0.5);">
+                <div style="text-align: center; margin-bottom: 40px;">
+                    <h1 style="font-size: 48px; font-weight: bold; color: #06b6d4; margin-bottom: 10px;">VAYU Air Quality Monitor</h1>
+                    <p style="font-size: 24px; color: #94a3b8;">Real-time Air Quality Data</p>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 40px;">
+                    <div id="share-aqi-box" style="background: linear-gradient(135deg, #334155 0%, #1e293b 100%); padding: 30px; border-radius: 20px; text-align: center; border-top: 8px solid #06b6d4;">
+                        <p style="font-size: 24px; color: #94a3b8; margin-bottom: 10px;">AQI</p>
+                        <p id="share-aqi-value" style="font-size: 72px; font-weight: bold; color: #f8fafc; margin: 0;"></p>
+                        <p id="share-aqi-status" style="font-size: 28px; font-weight: 600; margin-top: 10px;"></p>
+                    </div>
+                    
+                    <div style="background: linear-gradient(135deg, #334155 0%, #1e293b 100%); padding: 30px; border-radius: 20px; text-align: center; border-top: 8px solid #ef4444;">
+                        <p style="font-size: 24px; color: #94a3b8; margin-bottom: 10px;">PM2.5</p>
+                        <p id="share-pm25-value" style="font-size: 72px; font-weight: bold; color: #f8fafc; margin: 0;"></p>
+                        <p style="font-size: 24px; color: #94a3b8; margin-top: 10px;">µg/m³</p>
+                    </div>
+                </div>
+                
+                <div style="background: linear-gradient(135deg, #422006 0%, #7c2d12 100%); padding: 35px; border-radius: 20px; text-align: center; margin-bottom: 40px; border-left: 8px solid #f59e0b;">
+                    <p style="font-size: 32px; margin-bottom: 15px;">🚬</p>
+                    <p style="font-size: 28px; font-weight: 600; color: #fef3c7; margin: 0;">Breathing this air for 24 hours equals</p>
+                    <p id="share-cigarettes" style="font-size: 56px; font-weight: bold; color: #fca5a5; margin: 15px 0;"></p>
+                </div>
+                
+                <div style="text-align: center; padding-top: 30px; border-top: 3px solid #334155;">
+                    <p id="share-timestamp" style="font-size: 20px; color: #94a3b8;"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main>
+        <div id="page-home" class="page-content">
+            <!-- Hero Section -->
+            <section class="bg-white dark:bg-gray-800">
+                <div class="container mx-auto px-6 py-20 md:py-32 text-center">
+                    <h1 class="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white leading-tight">Real-Time Air Quality Monitoring</h1>
+                    <p class="mt-4 text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">VAYU is a student-made project to monitor air quality in real-time.</p>
+                    <button id="share-aqi-btn" class="mt-6 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-8 py-4 rounded-lg shadow-lg transition text-lg">
+                        📤 Share Current AQI
+                    </button>
+                </div>
+            </section>
+
+             <!-- Live Data Section -->
+            <section id="live-data" class="py-20 bg-white dark:bg-gray-900">
+                <div class="container mx-auto px-6">
+                    <div class="text-center mb-16">
+                        <h2 class="text-3xl font-bold dark:text-white">Live Sensor Readings</h2>
+                        <div class="flex justify-center items-center mt-4">
+                            <p class="text-gray-600 dark:text-gray-400 mr-4">Click on any card for detailed information</p>
+                            <div id="sensor-status-indicator" class="flex items-center space-x-2">
+                                <div id="status-dot" class="w-3 h-3 rounded-full bg-gray-400 animate-pulse"></div>
+                                <span id="status-text" class="font-semibold text-gray-500 dark:text-gray-400">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                        <!-- AQI Card -->
+                        <div id="aqi-card" class="sensor-card p-6 rounded-lg shadow-md transition-all duration-500 border-t-4 border-gray-300" onclick="showCardDetail('aqi', null)">
+                            <h3 class="text-lg font-semibold text-gray-500 dark:text-gray-400">AQI</h3>
+                            <p class="text-4xl font-bold my-2"><span id="aqi-value">...</span></p>
+                            <p id="aqi-status" class="font-semibold">Loading...</p>
+                        </div>
+                        <!-- PM2.5 Card -->
+                        <div id="pm25-card" class="sensor-card p-6 rounded-lg shadow-md transition-all duration-500 border-t-4 border-gray-300" onclick="showCardDetail('pm25', null)">
+                            <h3 class="text-lg font-semibold text-gray-500 dark:text-gray-400">PM2.5</h3>
+                            <p class="text-4xl font-bold my-2"><span id="pm25-value">...</span> <span class="text-lg font-normal">µg/m³</span></p>
+                            <p id="pm25-status" class="font-semibold">Loading...</p>
+                        </div>
+                        <!-- PM1 Card -->
+                        <div id="pm1-card" class="sensor-card p-6 rounded-lg shadow-md transition-all duration-500 border-t-4 border-gray-300" onclick="showCardDetail('pm1', null)">
+                            <h3 class="text-lg font-semibold text-gray-500 dark:text-gray-400">PM1.0</h3>
+                            <p class="text-4xl font-bold my-2"><span id="pm1-value">...</span> <span class="text-lg font-normal">µg/m³</span></p>
+                            <p id="pm1-status" class="font-semibold">Loading...</p>
+                        </div>
+                        <!-- PM10 Card -->
+                        <div id="pm10-card" class="sensor-card p-6 rounded-lg shadow-md transition-all duration-500 border-t-4 border-gray-300" onclick="showCardDetail('pm10', null)">
+                            <h3 class="text-lg font-semibold text-gray-500 dark:text-gray-400">PM10</h3>
+                            <p class="text-4xl font-bold my-2"><span id="pm10-value">...</span> <span class="text-lg font-normal">µg/m³</span></p>
+                            <p id="pm10-status" class="font-semibold">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Did You Know Section -->
+            <section id="did-you-know" class="py-16 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20">
+                <div class="container mx-auto px-6">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 md:p-12 border-l-4 border-indigo-500">
+                        <div class="flex items-start space-x-4">
+                            <div class="flex-shrink-0">
+                                <svg class="w-8 h-8 text-indigo-600 dark:text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">Did You Know?</h3>
+                                <p id="pollution-fact" class="text-lg text-gray-700 dark:text-gray-300 leading-relaxed"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- City Comparison Section -->
+            <section id="comparison" class="py-20 bg-gray-50 dark:bg-gray-800">
+                <div class="container mx-auto px-6">
+                     <div class="text-center mb-16">
+                        <h2 class="text-3xl font-bold dark:text-white">Compare With Other Cities</h2>
+                        <p class="text-gray-600 dark:text-gray-400 mt-2">Live data provided by the World Air Quality Index Project. Click cards for details.</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                        <div>
+                            <label for="indian-city-select" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Indian Cities</label>
+                            <select id="indian-city-select" class="city-select w-full p-3 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600">
+                                <option value="">Select an Indian city</option>
+                                <option value="delhi">Delhi</option>
+                                <option value="ahmedabad">Ahmedabad</option>
+                                <option value="amritsar">Amritsar</option>
+                                <option value="bangalore">Bengaluru</option>
+                                <option value="chennai">Chennai</option>
+                                <option value="hyderabad">Hyderabad</option>
+                                <option value="kanpur">Kanpur</option>
+                                <option value="kolkata">Kolkata</option>
+                                <option value="lucknow">Lucknow</option>
+                                <option value="mumbai">Mumbai</option>
+                                <option value="pune">Pune</option>
+                            </select>
+                        </div>
+                        <div>
+                             <label for="international-city-select" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">International Cities</label>
+                            <select id="international-city-select" class="city-select w-full p-3 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600">
+                                <option value="">Select an international city</option>
+                                <option value="beijing">Beijing</option>
+                                <option value="berlin">Berlin</option>
+                                <option value="cairo">Cairo</option>
+                                <option value="hong kong">Hong Kong</option>
+                                <option value="london">London</option>
+                                <option value="new york">New York</option>
+                                <option value="paris">Paris</option>
+                                <option value="seoul">Seoul</option>
+                                <option value="shanghai">Shanghai</option>
+                                <option value="singapore">Singapore</option>
+                                <option value="tokyo">Tokyo</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="comparison-display" class="mt-8">
+                        <div id="comparison-title" class="text-center text-xl font-bold mb-4 hidden"></div>
+                        <div id="comparison-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Time Period Comparison Section -->
+            <section id="time-comparison" class="py-20 bg-white dark:bg-gray-900">
+                <div class="container mx-auto px-6">
+                    <div class="text-center mb-8">
+                        <h2 class="text-3xl font-bold dark:text-white">Compare Time Periods</h2>
+                        <p class="text-gray-600 dark:text-gray-400 mt-2">See how air quality changes over time</p>
+                    </div>
+                    
+                    <div class="flex justify-center mb-8 space-x-2 flex-wrap gap-2">
+                        <button class="comparison-btn bg-indigo-500 text-white px-4 py-2 rounded-md shadow" data-comparison="today-yesterday">Today vs Yesterday</button>
+                        <button class="comparison-btn bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-md" data-comparison="week-lastweek">This Week vs Last Week</button>
+                    </div>
+
+                    <div id="comparison-results" class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                        <div class="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg shadow">
+                            <h3 id="period-1-label" class="text-lg font-semibold mb-4 dark:text-white">Today</h3>
+                            <div class="space-y-3">
+                                <div><span class="text-gray-600 dark:text-gray-400">Avg PM2.5:</span> <span id="current-pm25" class="font-bold">--</span></div>
+                                <div><span class="text-gray-600 dark:text-gray-400">Avg AQI:</span> <span id="current-aqi" class="font-bold">--</span></div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg shadow">
+                            <h3 id="period-2-label" class="text-lg font-semibold mb-4 dark:text-white">Yesterday</h3>
+                            <div class="space-y-3">
+                                <div><span class="text-gray-600 dark:text-gray-400">Avg PM2.5:</span> <span id="previous-pm25" class="font-bold">--</span></div>
+                                <div><span class="text-gray-600 dark:text-gray-400">Avg AQI:</span> <span id="previous-aqi" class="font-bold">--</span></div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg shadow">
+                            <h3 class="text-lg font-semibold mb-4 dark:text-white">Change</h3>
+                            <div class="space-y-3">
+                                <div id="change-pm25" class="font-bold">--</div>
+                                <div id="change-aqi" class="font-bold">--</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Historical Data Section -->
+            <section id="history" class="py-20 bg-gray-50 dark:bg-gray-900">
+                <div class="container mx-auto px-6">
+                    <div class="text-center mb-8">
+                        <h2 class="text-3xl font-bold dark:text-white">Historical Data</h2>
+                        <p class="text-gray-600 dark:text-gray-400 mt-2">Explore sensor data trends over time.</p>
+                    </div>
+                    
+                    <div class="flex justify-center mb-8 space-x-2 flex-wrap gap-2">
+                        <button class="time-range-btn px-4 py-2 rounded-md shadow" data-hours="1">1 Hour</button>
+                        <button class="time-range-btn px-4 py-2 rounded-md shadow" data-hours="3">3 Hours</button>
+                        <button class="time-range-btn px-4 py-2 rounded-md shadow" data-hours="6">6 Hours</button>
+                        <button class="time-range-btn px-4 py-2 rounded-md shadow" data-hours="12">12 Hours</button>
+                        <button class="time-range-btn px-4 py-2 rounded-md shadow" data-hours="24">24 Hours</button>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md h-96">
+                            <h3 class="text-xl font-semibold mb-4 text-center dark:text-white">AQI History</h3>
+                            <canvas id="aqiChart"></canvas>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md h-96">
+                            <h3 class="text-xl font-semibold mb-4 text-center dark:text-white">PM2.5 History</h3>
+                            <canvas id="pm25Chart"></canvas>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md h-96">
+                            <h3 class="text-xl font-semibold mb-4 text-center dark:text-white">PM1.0 History</h3>
+                            <canvas id="pm1Chart"></canvas>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md h-96">
+                            <h3 class="text-xl font-semibold mb-4 text-center dark:text-white">PM10 History</h3>
+                            <canvas id="pm10Chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Secondary Pages -->
+        <div id="secondary-pages">
+            <section id="page-about" class="page-content hidden py-20 dark:bg-gray-900">
+                <div class="container mx-auto px-6">
+                    <div class="text-center mb-16">
+                        <h2 class="text-3xl font-bold dark:text-white">About The Project</h2>
+                        <p class="text-gray-600 dark:text-gray-400 mt-2">Our mission and the technology behind it.</p>
+                    </div>
+                    <div class="max-w-3xl mx-auto bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md">
+                       <p>Content for the about section will go here.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="page-monitor" class="page-content hidden py-20 bg-indigo-50 dark:bg-indigo-900/20">
+                <div class="container mx-auto px-6">
+                    <div class="md:flex md:items-center md:space-x-12">
+                        <div class="md:w-1/2">
+                            <img src="https://placehold.co/800x600/e9d5ff/3730a3?text=VAYU+Monitor" alt="VAYU Monitor" class="rounded-lg shadow-lg w-full">
+                        </div>
+                        <div class="md:w-1/2 mt-8 md:mt-0">
+                            <h2 class="text-3xl font-bold dark:text-white">The VAYU Monitor</h2>
+                            <p class="mt-4 text-gray-600 dark:text-gray-300">Designed and built from the ground up.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="page-gallery" class="page-content hidden py-20 dark:bg-gray-900">
+                <div class="container mx-auto px-6">
+                    <div class="text-center mb-16">
+                        <h2 class="text-3xl font-bold dark:text-white">Gallery</h2>
+                    </div>
+                </div>
+            </section>
+
+            <section id="page-timeline" class="page-content hidden py-20 dark:bg-gray-900">
+                <div class="container mx-auto px-6">
+                    <div class="text-center mb-16">
+                        <h2 class="text-3xl font-bold dark:text-white">Project Timeline</h2>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script type="module">
+        // Load data from static JSON files instead of Firebase
+        let currentValues = { pm1_0: 0, pm2_5: 0, pm10: 0, aqi: 0 };
+        let historyData = [];
+        let currentCityName = "";
+
+        // Load static data on page load
+        async function loadData() {
+            try {
+                // Load current data
+                const currentResponse = await fetch('/current-data.json');
+                const currentData = await currentResponse.json();
+                
+                if (currentData.pm2_5 && currentData.pm10) {
+                    const aqi = calculateIndianAQI(currentData.pm2_5, currentData.pm10);
+                    currentValues = {
+                        pm1_0: currentData.pm1_0 || 0,
+                        pm2_5: currentData.pm2_5 || 0,
+                        pm10: currentData.pm10 || 0,
+                        aqi: aqi
+                    };
+                    updateAllStatuses(currentValues);
+                    
+                    document.getElementById('status-dot').classList.remove('bg-gray-400', 'bg-red-500');
+                    document.getElementById('status-dot').classList.add('bg-green-500');
+                    document.getElementById('status-text').textContent = 'Online';
+                }
+                
+                // Load history data
+                const historyResponse = await fetch('/history-data.json');
+                historyData = await historyResponse.json();
+                
+                // Process history data to add AQI
+                historyData = historyData.map(item => ({
+                    ...item,
+                    aqi: calculateIndianAQI(item.pm2_5, item.pm10),
+                    timestamp: new Date(item.timestamp)
+                })).sort((a, b) => a.timestamp - b.timestamp);
+                
+                console.log(`Loaded ${historyData.length} historical data points`);
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('status-dot').classList.remove('bg-gray-400', 'bg-green-500');
+                document.getElementById('status-dot').classList.add('bg-red-500');
+                document.getElementById('status-text').textContent = 'Error';
+            }
+        }
+
+        const pollutionFacts = [
+            "15% of deaths in Delhi happen due to pollution, and this number is only expected to go higher if the pollution stays the same every year.",
+            "Living 24 hours in 400 AQI is equivalent to smoking 10 cigarettes per day.",
+            "N95 masks can filter out at least 95% of airborne particles, making them effective against PM2.5 pollution.",
+            "Air purifiers with HEPA filters can remove up to 99.97% of particles as small as 0.3 microns from indoor air.",
+        ];
+
+        function displayRandomFact() {
+            const factElement = document.getElementById('pollution-fact');
+            const randomIndex = Math.floor(Math.random() * pollutionFacts.length);
+            factElement.textContent = pollutionFacts[randomIndex];
+        }
+        displayRandomFact();
+
+        function calculateIndianAQI(pm25, pm10) {
+            const breakpoints = [
+                { cLow: 0, cHigh: 30, iLow: 0, iHigh: 50 },
+                { cLow: 31, cHigh: 60, iLow: 51, iHigh: 100 },
+                { cLow: 61, cHigh: 90, iLow: 101, iHigh: 200 },
+                { cLow: 91, cHigh: 120, iLow: 201, iHigh: 300 },
+                { cLow: 121, cHigh: 250, iLow: 301, iHigh: 400 },
+                { cLow: 251, cHigh: 380, iLow: 401, iHigh: 500 }
+            ];
+            
+            let aqi = 0;
+            for (const bp of breakpoints) {
+                if (pm25 >= bp.cLow && pm25 <= bp.cHigh) {
+                    aqi = Math.round(((bp.iHigh - bp.iLow) / (bp.cHigh - bp.cLow)) * (pm25 - bp.cLow) + bp.iLow);
+                    break;
+                }
+            }
+            if (pm25 > 380) aqi = 500;
+            return aqi;
+        }
+
+        function calculateCigaretteEquivalent(pm25) {
+            return (pm25 / 22).toFixed(1);
+        }
+
+        function getHealthAdvice(type, value) {
+            if (type === 'aqi') {
+                if (value <= 50) return "Air quality is good. Enjoy outdoor activities!";
+                if (value <= 100) return "Air quality is acceptable. Sensitive individuals should consider limiting prolonged outdoor exertion.";
+                if (value <= 200) return "Unhealthy for sensitive groups. People with respiratory conditions should limit outdoor activities.";
+                if (value <= 300) return "Unhealthy. Everyone should reduce prolonged outdoor exertion. Wear N95 masks if going outside.";
+                if (value <= 400) return "Very unhealthy. Avoid all outdoor activities. Stay indoors with air purifiers. Use N95 masks if you must go out.";
+                return "Hazardous! Stay indoors at all times. Keep windows closed. Use air purifiers. This level is equivalent to smoking multiple cigarettes per day.";
+            }
+            if (type === 'pm25') {
+                if (value <= 30) return "PM2.5 levels are good. Safe for all outdoor activities.";
+                if (value <= 60) return "PM2.5 levels are acceptable but sensitive people should be cautious.";
+                if (value <= 90) return "Moderate PM2.5. People with heart or lung disease should reduce outdoor exertion.";
+                if (value <= 120) return "Poor PM2.5 levels. Everyone should limit outdoor activities. Use N95 masks.";
+                if (value <= 250) return "Very poor PM2.5. Avoid outdoor exposure. Use air purifiers indoors.";
+                return "Severe PM2.5 pollution. Do not go outside. Seal windows and use HEPA air purifiers.";
+            }
+            if (type === 'pm1') {
+                if (value <= 20) return "PM1.0 levels are excellent. These fine particles pose minimal risk.";
+                if (value <= 40) return "PM1.0 levels are acceptable. Sensitive individuals should be aware.";
+                if (value <= 60) return "Moderate PM1.0. These ultrafine particles can penetrate deep into lungs. Limit outdoor time.";
+                return "High PM1.0. These particles can enter the bloodstream. Stay indoors and use quality air purifiers.";
+            }
+            if (type === 'pm10') {
+                if (value <= 50) return "PM10 levels are good. No health concerns for the general public.";
+                if (value <= 100) return "PM10 levels are acceptable. Unusually sensitive people should consider reducing prolonged outdoor exertion.";
+                if (value <= 250) return "Moderate PM10. People with respiratory conditions should limit outdoor activities.";
+                return "High PM10. Everyone should avoid prolonged outdoor exertion. Wear protective masks.";
+            }
+        }
+
+        // Show card detail modal - Mobile-friendly
+        window.showCardDetail = function(cardType, cityData) {
+            const modal = document.getElementById('card-detail-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalContent = document.getElementById('modal-content');
+            
+            let title, content, value, pm25Value;
+            let values = cityData || currentValues;
+            
+            if (cardType === 'aqi') {
+                value = cityData ? cityData.aqi : values.aqi;
+                pm25Value = cityData ? cityData.pm25 : values.pm2_5;
+                const cigarettes = calculateCigaretteEquivalent(pm25Value);
+                title = `AQI: ${value}`;
+                content = `
+                    <div class="bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 p-6 md:p-8 rounded-xl border-2 border-red-200 dark:border-red-800">
+                        <div class="flex flex-col items-center">
+                            <div class="text-6xl md:text-7xl mb-4">🚬</div>
+                            <p class="text-xl md:text-2xl font-bold text-center mb-2 dark:text-white">Cigarette Equivalent</p>
+                            <p class="text-4xl md:text-5xl font-bold text-center text-red-600 dark:text-red-400">${cigarettes} cigarettes/day</p>
+                            <p class="text-center text-gray-600 dark:text-gray-400 mt-3 text-base md:text-lg">Based on PM2.5 levels of ${pm25Value} µg/m³</p>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-6 md:p-8 rounded-xl border-2 border-blue-200 dark:border-blue-800">
+                        <h3 class="text-xl md:text-2xl font-bold mb-3 flex items-center dark:text-white">
+                            <span class="text-3xl mr-2">💡</span>
+                            Health Advice
+                        </h3>
+                        <p class="text-base md:text-lg text-gray-700 dark:text-gray-300 leading-relaxed">${getHealthAdvice('aqi', value)}</p>
+                    </div>
+                    <div class="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                        <h4 class="font-semibold text-base md:text-lg mb-2 dark:text-white">📊 About AQI</h4>
+                        <p class="text-sm md:text-base text-gray-700 dark:text-gray-300">AQI is calculated using Indian standards based on PM2.5 and PM10 concentrations. It provides a single number to represent overall air quality.</p>
+                    </div>
+                `;
+            } else if (cardType === 'pm25') {
+                value = cityData ? cityData.pm25 : values.pm2_5;
+                const cigarettes = calculateCigaretteEquivalent(value);
+                title = `PM2.5: ${value} µg/m³`;
+                content = `
+                    <div class="bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 p-6 md:p-8 rounded-xl border-2 border-red-200 dark:border-red-800">
+                        <div class="flex flex-col items-center">
+                            <div class="text-6xl md:text-7xl mb-4">🚬</div>
+                            <p class="text-xl md:text-2xl font-bold text-center mb-2 dark:text-white">Daily Cigarette Equivalent</p>
+                            <p class="text-4xl md:text-5xl font-bold text-center text-red-600 dark:text-red-400">${cigarettes} cigarettes</p>
+                            <p class="text-center text-gray-600 dark:text-gray-400 mt-3 text-base md:text-lg">Breathing this air for 24 hours</p>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-6 md:p-8 rounded-xl border-2 border-blue-200 dark:border-blue-800">
+                        <h3 class="text-xl md:text-2xl font-bold mb-3 flex items-center dark:text-white">
+                            <span class="text-3xl mr-2">💡</span>
+                            Health Advice
+                        </h3>
+                        <p class="text-base md:text-lg text-gray-700 dark:text-gray-300 leading-relaxed">${getHealthAdvice('pm25', value)}</p>
+                    </div>
+                    <div class="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                        <h4 class="font-semibold text-base md:text-lg mb-2 dark:text-white">🔬 About PM2.5</h4>
+                        <p class="text-sm md:text-base text-gray-700 dark:text-gray-300">PM2.5 refers to particles smaller than 2.5 micrometers. These fine particles can penetrate deep into the lungs and even enter the bloodstream, causing serious health issues.</p>
+                    </div>
+                `;
+            } else if (cardType === 'pm1') {
+                value = cityData ? cityData.pm1 : values.pm1_0;
+                title = `PM1.0: ${value} µg/m³`;
+                content = `
+                    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-6 md:p-8 rounded-xl border-2 border-blue-200 dark:border-blue-800">
+                        <h3 class="text-xl md:text-2xl font-bold mb-3 flex items-center dark:text-white">
+                            <span class="text-3xl mr-2">💡</span>
+                            Health Advice
+                        </h3>
+                        <p class="text-base md:text-lg text-gray-700 dark:text-gray-300 leading-relaxed">${getHealthAdvice('pm1', value)}</p>
+                    </div>
+                    <div class="p-4 md:p-6 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                        <h4 class="font-semibold text-base md:text-lg mb-2 dark:text-white">🔬 About PM1.0</h4>
+                        <p class="text-sm md:text-base text-gray-700 dark:text-gray-300 mb-3">PM1.0 are ultrafine particles smaller than 1 micrometer. They're the most dangerous as they can cross from lungs directly into the bloodstream and even reach the brain.</p>
+                        <p class="text-sm md:text-base text-gray-700 dark:text-gray-300">Major sources include vehicle emissions and industrial processes.</p>
+                    </div>
+                    <div class="p-4 border-l-4 border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                        <p class="text-sm md:text-base dark:text-gray-200"><strong>⚠️ Note:</strong> PM1.0 is always less than or equal to PM2.5 since it's a subset of smaller particles.</p>
+                    </div>
+                `;
+            } else if (cardType === 'pm10') {
+                value = cityData ? cityData.pm10 : values.pm10;
+                title = `PM10: ${value} µg/m³`;
+                content = `
+                    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-6 md:p-8 rounded-xl border-2 border-blue-200 dark:border-blue-800">
+                        <h3 class="text-xl md:text-2xl font-bold mb-3 flex items-center dark:text-white">
+                            <span class="text-3xl mr-2">💡</span>
+                            Health Advice
+                        </h3>
+                        <p class="text-base md:text-lg text-gray-700 dark:text-gray-300 leading-relaxed">${getHealthAdvice('pm10', value)}</p>
+                    </div>
+                    <div class="p-4 md:p-6 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                        <h4 class="font-semibold text-base md:text-lg mb-2 dark:text-white">🔬 About PM10</h4>
+                        <p class="text-sm md:text-base text-gray-700 dark:text-gray-300">PM10 refers to particles smaller than 10 micrometers. These include dust, pollen, and mold. While larger than PM2.5, they can still irritate airways and worsen respiratory conditions like asthma.</p>
+                    </div>
+                    <div class="p-4 border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                        <p class="text-sm md:text-base dark:text-gray-200"><strong>🏭 Sources:</strong> Construction sites, unpaved roads, agricultural activities, and industrial emissions.</p>
+                    </div>
+                `;
+            }
+            
+            modalTitle.textContent = title;
+            modalContent.innerHTML = content;
+            modal.classList.remove('hidden');
+        };
+
+        document.getElementById('close-modal').addEventListener('click', () => {
+            document.getElementById('card-detail-modal').classList.add('hidden');
+        });
+
+        document.getElementById('card-detail-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'card-detail-modal') {
+                document.getElementById('card-detail-modal').classList.add('hidden');
+            }
+        });
+
+        // Share AQI with native sharing or modal
+        document.getElementById('share-aqi-btn').addEventListener('click', async () => {
+            const aqi = currentValues.aqi;
+            const pm25 = currentValues.pm2_5;
+            const cigarettes = calculateCigaretteEquivalent(pm25);
+            const aqiStatus = getAQIStatus(aqi).status;
+            
+            // Update share canvas
+            document.getElementById('share-aqi-value').textContent = aqi;
+            document.getElementById('share-pm25-value').textContent = pm25;
+            document.getElementById('share-cigarettes').textContent = `${cigarettes} cigarettes`;
+            document.getElementById('share-aqi-status').textContent = aqiStatus;
+            
+            // Set color
+            const aqiBox = document.getElementById('share-aqi-box');
+            if (aqi <= 50) {
+                aqiBox.style.borderTopColor = '#10b981';
+                document.getElementById('share-aqi-value').style.color = '#10b981';
+                document.getElementById('share-aqi-status').style.color = '#10b981';
+            } else if (aqi <= 100) {
+                aqiBox.style.borderTopColor = '#f59e0b';
+                document.getElementById('share-aqi-value').style.color = '#f59e0b';
+                document.getElementById('share-aqi-status').style.color = '#f59e0b';
+            } else if (aqi <= 200) {
+                aqiBox.style.borderTopColor = '#f97316';
+                document.getElementById('share-aqi-value').style.color = '#f97316';
+                document.getElementById('share-aqi-status').style.color = '#f97316';
+            } else {
+                aqiBox.style.borderTopColor = '#ef4444';
+                document.getElementById('share-aqi-value').style.color = '#ef4444';
+                document.getElementById('share-aqi-status').style.color = '#ef4444';
+            }
+            
+            const now = new Date();
+            document.getElementById('share-timestamp').textContent = `Data as of ${now.toLocaleString()}`;
+            
+            try {
+                const canvas = await html2canvas(document.getElementById('share-canvas'), {
+                    backgroundColor: null,
+                    scale: 2
+                });
+                
+                canvas.toBlob(async (blob) => {
+                    const file = new File([blob], 'vayu-air-quality.png', { type: 'image/png' });
+                    
+                    // Try native sharing first (mobile)
+                    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                        try {
+                            await navigator.share({
+                                files: [file],
+                                title: 'Current Air Quality - VAYU',
+                                text: `AQI: ${aqi} | PM2.5: ${pm25} µg/m³`
+                            });
+                        } catch (err) {
+                            if (err.name !== 'AbortError') {
+                                showShareModal(canvas);
+                            }
+                        }
+                    } else {
+                        // Fallback to modal (desktop)
+                        showShareModal(canvas);
+                    }
+                });
+            } catch (err) {
+                console.error('Error generating image:', err);
+                alert('Failed to generate image. Please try again.');
+            }
+        });
+
+        function showShareModal(canvas) {
+            const modal = document.getElementById('share-modal');
+            const img = document.getElementById('share-image');
+            img.src = canvas.toDataURL();
+            modal.classList.remove('hidden');
+        }
+
+        document.getElementById('close-share-modal').addEventListener('click', () => {
+            document.getElementById('share-modal').classList.add('hidden');
+        });
+
+        document.getElementById('download-share-image').addEventListener('click', () => {
+            const img = document.getElementById('share-image');
+            const link = document.createElement('a');
+            link.download = 'vayu-air-quality.png';
+            link.href = img.src;
+            link.click();
+        });
+
+        function getAQIStatus(aqi) {
+            if (typeof aqi !== 'number') return { status: 'No Data', textColor: 'text-gray-500 dark:text-gray-400', borderColor: 'border-gray-300' };
+            if (aqi <= 50) return { status: 'Good', textColor: 'text-green-600 dark:text-green-400', borderColor: 'border-green-400' };
+            if (aqi <= 100) return { status: 'Satisfactory', textColor: 'text-yellow-600 dark:text-yellow-400', borderColor: 'border-yellow-400' };
+            if (aqi <= 200) return { status: 'Moderate', textColor: 'text-orange-600 dark:text-orange-400', borderColor: 'border-orange-400' };
+            if (aqi <= 300) return { status: 'Poor', textColor: 'text-red-600 dark:text-red-400', borderColor: 'border-red-500' };
+            if (aqi <= 400) return { status: 'Very Poor', textColor: 'text-red-700 dark:text-red-500', borderColor: 'border-red-600' };
+            return { status: 'Severe', textColor: 'text-red-900 dark:text-red-600', borderColor: 'border-red-800' };
+        }
+
+        function getPM25Status(pm25) {
+            if (typeof pm25 !== 'number') return { status: 'No Data', textColor: 'text-gray-500 dark:text-gray-400', borderColor: 'border-gray-300' };
+            if (pm25 <= 30) return { status: 'Good', textColor: 'text-green-600 dark:text-green-400', borderColor: 'border-green-400' };
+            if (pm25 <= 60) return { status: 'Satisfactory', textColor: 'text-yellow-600 dark:text-yellow-400', borderColor: 'border-yellow-400' };
+            if (pm25 <= 90) return { status: 'Moderate', textColor: 'text-orange-600 dark:text-orange-400', borderColor: 'border-orange-400' };
+            if (pm25 <= 120) return { status: 'Poor', textColor: 'text-red-600 dark:text-red-400', borderColor: 'border-red-500' };
+            if (pm25 <= 250) return { status: 'Very Poor', textColor: 'text-red-700 dark:text-red-500', borderColor: 'border-red-600' };
+            return { status: 'Severe', textColor: 'text-red-900 dark:text-red-600', borderColor: 'border-red-800' };
+        }
+
+        function getPM1Status(pm1) {
+            if (typeof pm1 !== 'number') return { status: 'No Data', textColor: 'text-gray-500 dark:text-gray-400', borderColor: 'border-gray-300' };
+            if (pm1 <= 20) return { status: 'Good', textColor: 'text-green-600 dark:text-green-400', borderColor: 'border-green-400' };
+            if (pm1 <= 40) return { status: 'Satisfactory', textColor: 'text-yellow-600 dark:text-yellow-400', borderColor: 'border-yellow-400' };
+            if (pm1 <= 60) return { status: 'Moderate', textColor: 'text-orange-600 dark:text-orange-400', borderColor: 'border-orange-400' };
+            if (pm1 <= 80) return { status: 'Poor', textColor: 'text-red-600 dark:text-red-400', borderColor: 'border-red-500' };
+            if (pm1 <= 150) return { status: 'Very Poor', textColor: 'text-red-700 dark:text-red-500', borderColor: 'border-red-600' };
+            return { status: 'Severe', textColor: 'text-red-900 dark:text-red-600', borderColor: 'border-red-800' };
+        }
+        
+        function getPM10Status(pm10) {
+            if (typeof pm10 !== 'number') return { status: 'No Data', textColor: 'text-gray-500 dark:text-gray-400', borderColor: 'border-gray-300' };
+            if (pm10 <= 50) return { status: 'Good', textColor: 'text-green-600 dark:text-green-400', borderColor: 'border-green-400' };
+            if (pm10 <= 100) return { status: 'Satisfactory', textColor: 'text-yellow-600 dark:text-yellow-400', borderColor: 'border-yellow-400' };
+            if (pm10 <= 250) return { status: 'Moderate', textColor: 'text-orange-600 dark:text-orange-400', borderColor: 'border-orange-400' };
+            if (pm10 <= 350) return { status: 'Poor', textColor: 'text-red-600 dark:text-red-400', borderColor: 'border-red-500' };
+            if (pm10 <= 430) return { status: 'Very Poor', textColor: 'text-red-700 dark:text-red-500', borderColor: 'border-red-600' };
+            return { status: 'Severe', textColor: 'text-red-900 dark:text-red-600', borderColor: 'border-red-800' };
+        }
+
+        function updateAllStatuses(data) {
+            const isDark = document.documentElement.classList.contains('dark');
+            let aqi = null;
+            if (typeof data.pm2_5 === 'number' && typeof data.pm10 === 'number') {
+                aqi = calculateIndianAQI(data.pm2_5, data.pm10);
+            }
+            
+            currentValues = {
+                pm1_0: data.pm1_0 || 0,
+                pm2_5: data.pm2_5 || 0,
+                pm10: data.pm10 || 0,
+                aqi: aqi || 0
+            };
+            
+            updateStatus('aqi', aqi, getAQIStatus, isDark);
+            updateStatus('pm25', data.pm2_5, getPM25Status, isDark);
+            updateStatus('pm1', data.pm1_0, getPM1Status, isDark);
+            updateStatus('pm10', data.pm10, getPM10Status, isDark);
+        }
+
+        function updateStatus(type, value, statusFn, isDark) {
+            const valueEl = document.getElementById(`${type}-value`);
+            const statusEl = document.getElementById(`${type}-status`);
+            const cardEl = document.getElementById(`${type}-card`);
+            const isNumber = typeof value === 'number';
+            valueEl.innerText = isNumber ? value : '...';
+            const { status, textColor, borderColor } = statusFn(value);
+            cardEl.className = `sensor-card p-6 rounded-lg shadow-md transition-all duration-500 border-t-4 ${borderColor}`;
+            statusEl.textContent = status;
+            statusEl.className = `font-semibold ${textColor}`;
+            valueEl.className = isNumber ? textColor : (isDark ? 'text-white' : 'text-gray-900');
+        }
+
+        // Charts
+        let aqiChart, pm25Chart, pm1Chart, pm10Chart;
+        let currentHoursSelected = 1;
+
+        function getChartOptions(hours, data) {
+            const isDarkMode = document.documentElement.classList.contains('dark');
+            const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+            const textColor = isDarkMode ? '#d1d5db' : '#4b5563';
+            let timeUnit = 'hour';
+            let minTime = null, maxTime = null;
+
+            if (data && data.length > 0) {
+                minTime = data[0].timestamp;
+                maxTime = data[data.length - 1].timestamp;
+                const durationHours = (maxTime.getTime() - minTime.getTime()) / (1000 * 60 * 60);
+                if (durationHours <= 2) timeUnit = 'minute';
+                else if (durationHours <= 12) timeUnit = 'hour';
+                else if (durationHours <= 48) timeUnit = 'hour';
+                else timeUnit = 'day';
+            }
+
+            return {
+                scales: {
+                    x: { type: 'time', min: minTime, max: maxTime, time: { unit: timeUnit, tooltipFormat: 'PPp' }, title: { display: true, text: 'Time', color: textColor }, ticks: { color: textColor }, grid: { color: gridColor } },
+                    y: { beginAtZero: true, title: { display: true, text: 'Value', color: textColor }, ticks: { color: textColor }, grid: { color: gridColor } }
+                },
+                plugins: { legend: { labels: { color: textColor } } },
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+            };
+        }
+            
+        function createCharts() {
+            const initialOptions = getChartOptions(1);
+            aqiChart = new Chart(document.getElementById('aqiChart').getContext('2d'), { type: 'line', data: { datasets: [{ label: 'AQI', borderColor: 'rgb(79, 70, 229)', tension: 0.1 }] }, options: initialOptions });
+            pm25Chart = new Chart(document.getElementById('pm25Chart').getContext('2d'), { type: 'line', data: { datasets: [{ label: 'PM2.5 (µg/m³)', borderColor: 'rgb(239, 68, 68)', tension: 0.1 }] }, options: initialOptions });
+            pm1Chart = new Chart(document.getElementById('pm1Chart').getContext('2d'), { type: 'line', data: { datasets: [{ label: 'PM1.0 (µg/m³)', borderColor: 'rgb(34, 197, 94)', tension: 0.1 }] }, options: initialOptions });
+            pm10Chart = new Chart(document.getElementById('pm10Chart').getContext('2d'), { type: 'line', data: { datasets: [{ label: 'PM10 (µg/m³)', borderColor: 'rgb(249, 115, 22)', tension: 0.1 }] }, options: initialOptions });
+        }
+
+        function fetchHistoricalData(hours) {
+            currentHoursSelected = hours;
+            const now = new Date();
+            const startTime = new Date(now.getTime() - hours * 60 * 60 * 1000);
+            
+            // Filter data by selected time range
+            const filteredData = historyData.filter(item => item.timestamp >= startTime);
+            
+            console.log(`Showing ${filteredData.length} data points for last ${hours} hours`);
+            updateCharts(filteredData, hours);
+        }
+
+        function updateCharts(data, hours) {
+            aqiChart.data.datasets[0].data = data.map(d => ({ x: d.timestamp, y: d.aqi })).filter(d => d.y !== undefined);
+            pm25Chart.data.datasets[0].data = data.map(d => ({ x: d.timestamp, y: d.pm2_5 })).filter(d => d.y !== undefined);
+            pm1Chart.data.datasets[0].data = data.map(d => ({ x: d.timestamp, y: d.pm1_0 })).filter(d => d.y !== undefined);
+            pm10Chart.data.datasets[0].data = data.map(d => ({ x: d.timestamp, y: d.pm10 })).filter(d => d.y !== undefined);
+            
+            const newOptions = getChartOptions(hours, data);
+            aqiChart.options = newOptions;
+            pm25Chart.options = newOptions;
+            pm1Chart.options = newOptions;
+            pm10Chart.options = newOptions;
+
+            aqiChart.update();
+            pm25Chart.update();
+            pm1Chart.update();
+            pm10Chart.update();
+        }
+
+        function updateChartTheme() {
+            if(aqiChart && pm25Chart && pm1Chart && pm10Chart) {
+                const data = aqiChart.data.datasets[0].data.map(d => ({timestamp: new Date(d.x)}));
+                const options = getChartOptions(currentHoursSelected, data);
+                [aqiChart, pm25Chart, pm1Chart, pm10Chart].forEach(chart => {
+                    chart.options = options;
+                    chart.update();
+                });
+            }
+        }
+        window.updateChartTheme = updateChartTheme;
+        window.updateAllStatuses = updateAllStatuses;
+
+        // Time Period Comparison
+        function compareTimePeriods(comparisonType) {
+            const now = new Date();
+            let currentStart, currentEnd, previousStart, previousEnd, label1, label2;
+
+            if (comparisonType === 'today-yesterday') {
+                currentStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+                currentEnd = now;
+                previousStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 0, 0, 0);
+                previousEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+                label1 = 'Today';
+                label2 = 'Yesterday';
+            } else if (comparisonType === 'week-lastweek') {
+                const dayOfWeek = now.getDay();
+                currentStart = new Date(now.getTime() - dayOfWeek * 24 * 60 * 60 * 1000);
+                currentStart.setHours(0, 0, 0, 0);
+                currentEnd = now;
+                previousStart = new Date(currentStart.getTime() - 7 * 24 * 60 * 60 * 1000);
+                previousEnd = new Date(currentStart);
+                label1 = 'This Week';
+                label2 = 'Last Week';
+            }
+
+            document.getElementById('period-1-label').textContent = label1;
+            document.getElementById('period-2-label').textContent = label2;
+
+            const currentData = historyData.filter(d => d.timestamp >= currentStart && d.timestamp <= currentEnd);
+            const previousData = historyData.filter(d => d.timestamp >= previousStart && d.timestamp < previousEnd);
+
+            const currentAvg = {
+                pm25: currentData.length > 0 ? Math.round(currentData.reduce((sum, d) => sum + d.pm2_5, 0) / currentData.length) : 0,
+                aqi: currentData.length > 0 ? Math.round(currentData.reduce((sum, d) => sum + d.aqi, 0) / currentData.length) : 0
+            };
+
+            const previousAvg = {
+                pm25: previousData.length > 0 ? Math.round(previousData.reduce((sum, d) => sum + d.pm2_5, 0) / previousData.length) : 0,
+                aqi: previousData.length > 0 ? Math.round(previousData.reduce((sum, d) => sum + d.aqi, 0) / previousData.length) : 0
+            };
+
+            document.getElementById('current-pm25').textContent = `${currentAvg.pm25} µg/m³`;
+            document.getElementById('current-aqi').textContent = currentAvg.aqi;
+            document.getElementById('previous-pm25').textContent = `${previousAvg.pm25} µg/m³`;
+            document.getElementById('previous-aqi').textContent = previousAvg.aqi;
+
+            const pm25Change = currentAvg.pm25 - previousAvg.pm25;
+            const aqiChange = currentAvg.aqi - previousAvg.aqi;
+
+            const pm25ChangeText = pm25Change > 0 ? `+${pm25Change} µg/m³ ⬆️` : pm25Change < 0 ? `${pm25Change} µg/m³ ⬇️` : 'No change';
+            const aqiChangeText = aqiChange > 0 ? `+${aqiChange} ⬆️` : aqiChange < 0 ? `${aqiChange} ⬇️` : 'No change';
+
+            const pm25ChangeColor = pm25Change > 0 ? 'text-red-600 dark:text-red-400' : pm25Change < 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400';
+            const aqiChangeColor = aqiChange > 0 ? 'text-red-600 dark:text-red-400' : aqiChange < 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400';
+
+            document.getElementById('change-pm25').innerHTML = `<span class="${pm25ChangeColor}">${pm25ChangeText}</span>`;
+            document.getElementById('change-aqi').innerHTML = `<span class="${aqiChangeColor}">${aqiChangeText}</span>`;
+        }
+
+        // City Comparison
+        const citySelects = document.querySelectorAll('.city-select');
+        const comparisonCardsContainer = document.getElementById('comparison-cards-container');
+        const comparisonTitle = document.getElementById('comparison-title');
+        const WAQI_TOKEN = "78af566d0212bb684fbd88a3e83cadc534b0c091";
+
+        async function fetchCityAQI(city, selectElement) {
+            citySelects.forEach(sel => { if (sel !== selectElement) sel.value = ""; });
+            if (!city) {
+                comparisonCardsContainer.innerHTML = "";
+                comparisonTitle.classList.add('hidden');
+                return;
+            }
+            comparisonCardsContainer.innerHTML = `<p class="col-span-full dark:text-gray-300">Fetching data...</p>`;
+            comparisonTitle.classList.add('hidden');
+            try {
+                const response = await fetch(`https://api.waqi.info/feed/${city}/?token=${WAQI_TOKEN}`);
+                const data = await response.json();
+                if (data.status === "ok") {
+                    const iaqi = data.data.iaqi;
+                    const cityData = {
+                        pm25: iaqi.pm25 ? iaqi.pm25.v : 'N/A',
+                        pm1: iaqi.pm10 ? Math.round(iaqi.pm10.v * 0.5) : 'N/A',
+                        pm10: iaqi.pm10 ? iaqi.pm10.v : 'N/A'
+                    };
+                    let aqi = 'N/A';
+                    if (typeof cityData.pm25 === 'number' && typeof cityData.pm10 === 'number') {
+                        aqi = calculateIndianAQI(cityData.pm25, cityData.pm10);
+                    }
+                    cityData.aqi = aqi;
+                    currentCityName = data.data.city.name;
+                    
+                    comparisonTitle.innerText = `Live Data for ${currentCityName}`;
+                    comparisonTitle.classList.remove('hidden');
+                    const isDark = document.documentElement.classList.contains('dark');
+                    let cardsHTML = '';
+                    cardsHTML += createComparisonCard('aqi', 'AQI', aqi, '', getAQIStatus(aqi), isDark, cityData);
+                    cardsHTML += createComparisonCard('pm25', 'PM2.5', cityData.pm25, 'µg/m³', getPM25Status(cityData.pm25), isDark, cityData);
+                    cardsHTML += createComparisonCard('pm1', 'PM1.0', cityData.pm1, 'µg/m³', getPM1Status(cityData.pm1), isDark, cityData);
+                    cardsHTML += createComparisonCard('pm10', 'PM10', cityData.pm10, 'µg/m³', getPM10Status(cityData.pm10), isDark, cityData);
+                    comparisonCardsContainer.innerHTML = cardsHTML;
+                }
+            } catch (error) {
+                comparisonCardsContainer.innerHTML = `<p class="col-span-full text-red-500 dark:text-red-400">An error occurred.</p>`;
+            }
+        }
+
+        function createComparisonCard(type, label, value, unit, statusInfo, isDark, cityData) {
+            const isNumber = typeof value === 'number';
+            const displayValue = isNumber ? value : '...';
+            const valueColor = isNumber ? statusInfo.textColor : (isDark ? 'text-white' : 'text-gray-900');
+            const cityDataJson = JSON.stringify(cityData).replace(/"/g, '&quot;');
+            return `<div class="sensor-card p-6 rounded-lg shadow-md transition-all duration-500 border-t-4 ${statusInfo.borderColor}" onclick='showCardDetail("${type}", ${cityDataJson})'><h3 class="text-lg font-semibold text-gray-500 dark:text-gray-400">${label}</h3><p class="text-4xl font-bold my-2"><span class="${valueColor}">${displayValue}</span> <span class="text-lg font-normal">${unit}</span></p><p class="font-semibold ${statusInfo.textColor}">${statusInfo.status}</p></div>`;
+        }
+        
+        citySelects.forEach(select => {
+            select.addEventListener('change', () => fetchCityAQI(select.value, select));
+        });
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Load data first
+            await loadData();
+            
+            // Then create charts
+            createCharts();
+            fetchHistoricalData(1);
+            compareTimePeriods('today-yesterday');
+            
+            const timeRangeButtons = document.querySelectorAll('.time-range-btn');
+            const isDark = document.documentElement.classList.contains('dark');
+            timeRangeButtons[0].classList.add('bg-indigo-500', 'text-white');
+            timeRangeButtons[0].classList.remove(isDark ? 'bg-gray-700' : 'bg-gray-200', isDark ? 'text-gray-300' : 'text-gray-700');
+            
+            timeRangeButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const clickedButton = e.currentTarget;
+                    const isDark = document.documentElement.classList.contains('dark');
+                    
+                    timeRangeButtons.forEach(btn => {
+                        btn.classList.remove('bg-indigo-500', 'text-white');
+                        btn.classList.add(isDark ? 'bg-gray-700' : 'bg-gray-200', isDark ? 'text-gray-300' : 'text-gray-700');
+                    });
+                    
+                    clickedButton.classList.remove('bg-gray-200', 'bg-gray-700', 'text-gray-700', 'text-gray-300');
+                    clickedButton.classList.add('bg-indigo-500', 'text-white');
+                    
+                    fetchHistoricalData(parseInt(clickedButton.dataset.hours, 10));
+                });
+            });
+
+            const comparisonButtons = document.querySelectorAll('.comparison-btn');
+            comparisonButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const clickedButton = e.currentTarget;
+                    const isDark = document.documentElement.classList.contains('dark');
+                    
+                    comparisonButtons.forEach(btn => {
+                        btn.classList.remove('bg-indigo-500', 'text-white');
+                        btn.classList.add(isDark ? 'bg-gray-700' : 'bg-gray-200', isDark ? 'text-gray-300' : 'text-gray-700');
+                    });
+                    
+                    clickedButton.classList.remove('bg-gray-200', 'bg-gray-700', 'text-gray-700', 'text-gray-300');
+                    clickedButton.classList.add('bg-indigo-500', 'text-white');
+                    
+                    compareTimePeriods(clickedButton.dataset.comparison);
+                });
+            });
+        });
+    </script>
+    
+    <script>
+        // Page Navigation
+        const menuToggleButton = document.getElementById('menu-toggle-button');
+        const closeMenuButton = document.getElementById('close-menu-button');
+        const sideMenu = document.getElementById('side-menu');
+        const menuOverlay = document.getElementById('menu-overlay');
+        const navLinks = document.querySelectorAll('.nav-link');
+        const homeLink = document.getElementById('home-link');
+        const pageContents = document.querySelectorAll('.page-content');
+
+        function showPage(pageId) {
+            pageContents.forEach(page => page.classList.add('hidden'));
+            const activePage = document.getElementById(`page-${pageId}`);
+            if (activePage) activePage.classList.remove('hidden');
+            window.scrollTo(0, 0);
+        }
+
+        function openMenu() {
+            sideMenu.classList.remove('translate-x-full');
+            menuOverlay.classList.remove('hidden');
+            menuOverlay.classList.add('opacity-100');
+        }
+
+        function closeMenu() {
+            sideMenu.classList.add('translate-x-full');
+            menuOverlay.classList.remove('opacity-100');
+            setTimeout(() => menuOverlay.classList.add('hidden'), 300);
+        }
+
+        menuToggleButton.addEventListener('click', openMenu);
+        closeMenuButton.addEventListener('click', closeMenu);
+        menuOverlay.addEventListener('click', closeMenu);
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                showPage(link.dataset.page);
+                closeMenu();
+            });
+        });
+        homeLink.addEventListener('click', (e) => {
+             e.preventDefault();
+             showPage('home');
+        });
+
+        // Dark Mode - DEFAULT TO DARK
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+
+        // Check saved preference or default to dark
+        if (localStorage.getItem('color-theme') === 'light') {
+            themeToggleDarkIcon.classList.remove('hidden');
+            document.documentElement.classList.remove('dark');
+        } else {
+            // Default to dark mode
+            themeToggleLightIcon.classList.remove('hidden');
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('color-theme', 'dark');
+        }
+
+        themeToggleBtn.addEventListener('click', function() {
+            themeToggleDarkIcon.classList.toggle('hidden');
+            themeToggleLightIcon.classList.toggle('hidden');
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('color-theme', isDark ? 'dark' : 'light');
+            
+            if (window.updateChartTheme) window.updateChartTheme();
+            if(window.updateAllStatuses) {
+                const data = {
+                    pm1_0: parseFloat(document.getElementById('pm1-value').innerText) || null,
+                    pm2_5: parseFloat(document.getElementById('pm25-value').innerText) || null,
+                    pm10: parseFloat(document.getElementById('pm10-value').innerText) || null
+                };
+                window.updateAllStatuses(data);
+            }
+
+            const timeRangeButtons = document.querySelectorAll('.time-range-btn');
+            timeRangeButtons.forEach(btn => {
+                if (!btn.classList.contains('bg-indigo-500')) {
+                    btn.classList.remove('bg-gray-200', 'bg-gray-700', 'text-gray-700', 'text-gray-300');
+                    btn.classList.add(isDark ? 'bg-gray-700' : 'bg-gray-200', isDark ? 'text-gray-300' : 'text-gray-700');
+                }
+            });
+
+            const comparisonButtons = document.querySelectorAll('.comparison-btn');
+            comparisonButtons.forEach(btn => {
+                if (!btn.classList.contains('bg-indigo-500')) {
+                    btn.classList.remove('bg-gray-200', 'bg-gray-700', 'text-gray-700', 'text-gray-300');
+                    btn.classList.add(isDark ? 'bg-gray-700' : 'bg-gray-200', isDark ? 'text-gray-300' : 'text-gray-700');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "vayu-air-quality-monitor",
+  "version": "1.0.0",
+  "description": "VAYU Air Quality Monitor - Static data website",
+  "scripts": {
+    "build": "node build-data.js"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "author": "",
+  "license": "MIT"
+}
